@@ -721,7 +721,6 @@ static void usb_status_menu_item_init(UsbStatusMenuItem *plugin)
   hh_set_callback((HhCallback)usb_status_menu_item_hal_cb, plugin);
 
   s = NULL;
-  /* FIXME - who does g_free() on s? */
   if (g_file_get_contents("/tmp/.current_usb_mode", &s, NULL, NULL))
   {
     for (i = 0; i < sizeof(usb_modes) / sizeof(usb_modes[0]); i++) {
@@ -736,7 +735,7 @@ static void usb_status_menu_item_init(UsbStatusMenuItem *plugin)
     i = 0;
 
   if (!s)
-    s = "<no data>";
+    s = g_strdup("<no data>");
 
   cable_connected = hh_query_state();
 
@@ -759,4 +758,6 @@ static void usb_status_menu_item_init(UsbStatusMenuItem *plugin)
       usb_status_menu_show_dialog(plugin, 3);
     }
   }
+
+  g_free(s);
 }
