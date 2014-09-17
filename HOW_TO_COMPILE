@@ -1,1 +1,0 @@
-gcc usb-plugin.c hal-helper.c -shared -o usb_plugin.so -fPIC `pkg-config --libs --cflags libhildondesktop-1 hal dbus-1 glib-2.0 hildon-1` -O2 -g
