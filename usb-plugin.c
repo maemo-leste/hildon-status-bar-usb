@@ -647,7 +647,7 @@ static void usb_status_menu_item_init(UsbStatusMenuItem *plugin)
   GtkWidget *vbox2;
   GtkWidget *label;
   PangoAttrList *attr;
-  int i;
+  unsigned int i;
   gboolean cable_connected;
   gchar *s;
 
