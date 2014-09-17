@@ -1,0 +1,4 @@
+[Desktop Entry]
+Name=USB status menu
+Type=default
+X-Path=usb_plugin.so
