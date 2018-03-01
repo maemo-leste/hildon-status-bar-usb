@@ -3,7 +3,7 @@
 #include <hildon/hildon-button.h>
 #include <hildon/hildon-helper.h>
 
-#include "hal-helper.h"
+#include "udev-helper.h"
 
 #define USB_TYPE_STATUS_MENU_ITEM (usb_status_menu_item_get_type ())
 
@@ -126,7 +126,7 @@ static void usb_status_menu_item_finalize(GObject *object)
   UsbStatusMenuItemPrivate *priv;
 
   priv = plugin->priv;
-  hh_destroy();
+  uh_destroy();
   usb_status_menu_show(plugin, FALSE, FALSE);
 
   if (priv) {
@@ -204,7 +204,7 @@ static void usb_status_menu_enable_mode(UsbStatusMenuItem *plugin,
   UsbStatusMenuItemPrivate *priv = plugin->priv;
 
   if (priv->tries_count <= 29) {
-    if (hh_query_state() == 1) {
+    if (uh_query_state() == 1) {
       DBusMessage *message;
       DBusConnection *connection;
       DBusPendingCall *pending = NULL;
@@ -261,7 +261,7 @@ static gboolean is_cable_detached(UsbStatusMenuItem *plugin)
 {
   gboolean rv;
 
-  rv = !hh_query_state();
+  rv = !uh_query_state();
   if (rv) {
     g_warning("usb-plugin::warning Cable detached before reply from ke-recv");
     stop_enable_usb_mode_timeout(plugin);
@@ -474,7 +474,7 @@ static void usb_status_menu_create_dialog(UsbStatusMenuItem *plugin)
   hildon_gtk_window_set_portrait_flags(GTK_WINDOW(priv->dialog),
                                        HILDON_PORTRAIT_MODE_SUPPORT);
 
-  s = hh_get_device_name();
+  s = uh_get_device_name();
   if (s && *s)
     title =
         g_strdup_printf(g_dgettext("hildon-status-bar-usb",
@@ -717,8 +717,8 @@ static void usb_status_menu_item_init(UsbStatusMenuItem *plugin)
   gtk_widget_show_all(GTK_WIDGET(priv->status_menu_button));
 
   priv->dialog = 0;
-  hh_init();
-  hh_set_callback((HhCallback)usb_status_menu_item_hal_cb, plugin);
+  uh_init();
+  uh_set_callback((UhCallback)usb_status_menu_item_hal_cb, plugin);
 
   s = NULL;
   if (g_file_get_contents("/tmp/.current_usb_mode", &s, NULL, NULL))
@@ -737,7 +737,7 @@ static void usb_status_menu_item_init(UsbStatusMenuItem *plugin)
   if (!s)
     s = g_strdup("<no data>");
 
-  cable_connected = hh_query_state();
+  cable_connected = uh_query_state();
 
   if (!cable_connected) {
     g_message("usb-plugin::init [saved_state='%s', usb_conn='%s']", s, "false");
