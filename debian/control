@@ -2,7 +2,7 @@ Source: hildon-status-bar-usb
 Section: misc
 Priority: optional
 Maintainer: Pali Rohár <pali.rohar@gmail.com>
-Build-Depends: debhelper (>= 5), pkg-config, libhildondesktop1-dev, libhal-dev
+Build-Depends: debhelper (>= 5), pkg-config, libhildondesktop1-dev, libgudev-1.0-dev
 
 Package: hildon-status-bar-usb
 Architecture: any
