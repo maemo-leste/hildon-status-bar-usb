@@ -44,4 +44,7 @@ binary: build
 	dh_md5sums
 	dh_builddeb
 
+binary-arch: binary
+build-arch: build
+
 .PHONY: build clean binary
