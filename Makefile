@@ -1,3 +1,7 @@
+# /usr/bin/ld: relocation R_X86_64_PC32 against symbol `stderr@@GLIBC_2.2.5'
+# can not be used when making a shared object; recompile with -fPIC
+CFLAGS += -fPIC
+
 all: usb_plugin.so
 
 install:
