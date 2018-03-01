@@ -14,6 +14,15 @@
  * /sys/class/phy/phy-48070000.i2c\:twl\@48\:twl4030-usb.0/device/vbus
  * /sys/devices/platform/68000000.ocp/480ab000.usb_otg_hs/musb-hdrc.0.auto/vbus
  * /sys/devices/platform/68000000.ocp/480ab000.usb_otg_hs/musb-hdrc.0.auto/mode
+ *
+ * TODO:
+ * - No hardcoded paths, proper device type matching
+ * - Implement name getting
+ * - Implement peripheral status getting (!)
+ * - Remove printfs, debug code
+ *
+ * TODO gadget (different file in the end):
+ * - Implement libusbg (or even use gadgetg)
  */
 
 typedef struct {
