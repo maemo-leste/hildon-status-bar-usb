@@ -202,12 +202,11 @@ static void usb_status_menu_enable_mode(UsbStatusMenuItem *plugin,
                                         DBusPendingCallNotifyFunction cb)
 {
   gboolean cable_connected;
-  gint usb_mode;
 
   UsbStatusMenuItemPrivate *priv = plugin->priv;
 
   if (priv->tries_count <= 29) {
-    uh_query_state(&cable_connected, &usb_mode);
+    uh_query_state(&cable_connected);
     if (cable_connected == 1) {
       DBusMessage *message;
       DBusConnection *connection;
@@ -265,9 +264,8 @@ static gboolean is_cable_detached(UsbStatusMenuItem *plugin)
 {
   gboolean rv;
   gboolean cable_connected;
-  gint usb_mode;
 
-  uh_query_state(&cable_connected, &usb_mode);
+  uh_query_state(&cable_connected);
   rv = !cable_connected;
   if (rv) {
     g_warning("usb-plugin::warning Cable detached before reply from ke-recv");
@@ -614,8 +612,7 @@ static void usb_status_menu_button_clicked_cb(GtkWidget *widget,
     usb_status_menu_create_dialog(plugin);
 }
 
-static void usb_status_menu_item_hal_cb(gboolean cable_connected,
-                                        gint usb_mode,
+static void usb_status_menu_item_hal_cb(gboolean cable_connected_to_pc,
                                         UsbStatusMenuItem *plugin)
 {
   UsbStatusMenuItemPrivate *priv = plugin->priv;
@@ -623,7 +620,7 @@ static void usb_status_menu_item_hal_cb(gboolean cable_connected,
   if (priv->expected_replies <= 0 ) {
     if (priv->ke_recv_alive) {
       /* TODO: Hardcoded mode (b_peripheral) is not cool */
-      if ( cable_connected == 1 && usb_mode == USB_MODE_B_PERIPHERAL ) {
+      if ( cable_connected_to_pc == 1) {
         g_debug("usb-plugin::usb-event: peripheral");
         if (!priv->current_mode) {
           usb_status_menu_show_dialog(plugin, 1);
@@ -658,7 +655,6 @@ static void usb_status_menu_item_init(UsbStatusMenuItem *plugin)
   PangoAttrList *attr;
   unsigned int i;
   gboolean cable_connected;
-  gint usb_mode;
   gchar *s;
 
   plugin->priv = priv;
@@ -749,16 +745,16 @@ static void usb_status_menu_item_init(UsbStatusMenuItem *plugin)
   if (!s)
     s = g_strdup("<no data>");
 
-  uh_query_state(&cable_connected, &usb_mode);
+  uh_query_state(&cable_connected);
 
   if (!cable_connected) {
     g_message("usb-plugin::init [saved_state='%s', usb_conn='%s']", s, "false");
-    usb_status_menu_item_hal_cb(FALSE, usb_mode, plugin);
+    usb_status_menu_item_hal_cb(FALSE, plugin);
   } else {
     g_message("usb-plugin::init [saved_state='%s', usb_conn='%s']", s, "true");
 
     if(i == 0) {
-      usb_status_menu_item_hal_cb(TRUE, usb_mode, plugin);
+      usb_status_menu_item_hal_cb(TRUE, plugin);
     } else if (i == 2) {
       if (osso_usb_mass_storage_is_used())
         usb_status_menu_show_dialog(plugin, 2);
