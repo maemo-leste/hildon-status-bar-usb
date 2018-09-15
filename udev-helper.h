@@ -13,13 +13,14 @@ char *uh_get_device_name();
 
 enum {
     USB_MODE_UNKNOWN = 0,
+
     USB_MODE_B_IDLE = 1,
     USB_MODE_B_PERIPHERAL = 2,
-    /*
-    TODO: Check on droid4/lime2
-    USB_MODE_A_IDLE,
-    USB_MODE_A_PERIPHERAL,
-    */
+    USB_MODE_B_HOST= 3,
+
+    USB_MODE_A_IDLE = 4,
+    USB_MODE_A_PERIPHERAL = 5,
+    USB_MODE_A_HOST = 6,
 };
 
 enum {

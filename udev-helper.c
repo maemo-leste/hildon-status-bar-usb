@@ -128,11 +128,18 @@ static gint read_usb_mode(void) {
     path = g_strconcat(otg_sysfs_path, "/mode", NULL);
     gboolean ok = g_file_get_contents(path, &strmode, NULL, NULL);
     if (ok) {
-        /* TODO: Add more modes a_peripheral, etc */
         if (strcmp(strmode, "b_idle\n") == 0) {
             mode = USB_MODE_B_IDLE;
         } else if (strcmp(strmode, "b_peripheral\n") == 0) {
             mode = USB_MODE_B_PERIPHERAL;
+        } else if (strcmp(strmode, "b_host\n") == 0) {
+            mode = USB_MODE_B_HOST;
+        } else if (strcmp(strmode, "a_idle\n") == 0) {
+            mode = USB_MODE_A_IDLE;
+        } else if (strcmp(strmode, "a_peripheral\n") == 0) {
+            mode = USB_MODE_A_PERIPHERAL;
+        } else if (strcmp(strmode, "a_host\n") == 0) {
+            mode = USB_MODE_A_HOST;
         }
 
         free(strmode);
