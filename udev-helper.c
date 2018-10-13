@@ -11,13 +11,13 @@
 /*
  * Code to detect changes in usb port state using udev.
  *
- * Ideally it finds a usb supply node, as well as udc driver and usb phy -- this
- * is the case on the N900.
+ * Ideally it finds a usb supply node, as well as udc driver.
  *
- * If there is no usb supply node, then we have to guess if a cable is
- * connected based upon usb phy vbus and udc driver mode. If any gadget is
- * active, state should change to *_peripheral (on n900) and vbus is on. If a
- * dumb charger is connected, then state will be *_idle.
+ * Generally it is expected that a gadget is always loaded, otherwise
+ * pc-detection doesn't work.
+ *
+ * If any gadget is active, state should change to *_peripheral (on n900) and
+ * vbus is on. If a dumb charger is connected, then state will be *_idle.
  */
 
 typedef struct {
@@ -29,7 +29,6 @@ typedef struct {
 
 typedef struct {
     const gchar* name;
-    const DeviceDriver phy_driver;
     const DeviceDriver usb_driver;
     const DeviceDriver supply_driver;
 } DeviceDrivers;
@@ -49,7 +48,6 @@ typedef struct {
  */
 
 typedef struct {
-    gboolean vbus;
     gint usb_mode;
     gint supply_mode;
 } PrivData;
@@ -58,25 +56,17 @@ static gpointer user_data = NULL;
 static UhCallback user_callback = NULL;
 
 static GUdevClient* client = NULL;
-static GUdevDevice* phy = NULL;
 static GUdevDevice* otg = NULL;
 static GUdevDevice* supply = NULL;
 static DeviceDrivers *active_device;
 
-static PrivData cache = { .vbus = 0,
-                          .usb_mode = USB_MODE_UNKNOWN,
+static PrivData cache = { .usb_mode = USB_MODE_UNKNOWN,
                           .supply_mode = USB_SUPPLY_UNKNOWN };
 
-#define DRIVER_COUNT 1
+#define DRIVER_COUNT 2
 static DeviceDrivers drivers[DRIVER_COUNT] = {
     {
         .name = "Nokia N900",
-        .phy_driver = {
-            .present = TRUE,
-            .subsystem = "platform",
-            .driver = "twl4030_usb",
-            .name = NULL,
-        },
         .usb_driver = {
             .present = TRUE,
             .subsystem = "platform",
@@ -90,29 +80,23 @@ static DeviceDrivers drivers[DRIVER_COUNT] = {
             .name = "isp1704",
         },
     },
-#if 0
     {
-        .name = "Motorola Droid 4",
-        .phy_driver = {
-            .present = TRUE,
-            .subsystem = NULL,
-            .driver = NULL,
-            .name = NULL,
-        },
+        .name = "LIME2",
         .usb_driver = {
             .present = TRUE,
-            .subsystem = NULL,
-            .driver = NULL,
+            .subsystem = "platform",
+            .driver = "musb-hdrc",
             .name = NULL,
         },
+        /* We can't read the mode from extcon, but at least we can use this to
+         * trigger on cable plugs and report on musb modes */
         .supply_driver = {
-            .present = FALSE,
-            .subsystem = NULL,
+            .present = TRUE,
+            .subsystem = "extcon",
             .driver = NULL,
-            .name = NULL,
+            .name = "extcon0",
         },
     },
-#endif
 };
 /* TODO: Also add generic best-effort later on, perhaps with attr matching? */
 
@@ -175,30 +159,6 @@ static gint read_supply_mode(void) {
     return mode;
 }
 
-static gint read_phy_vbus(void) {
-    const gchar* phy_sysfs_path = g_udev_device_get_sysfs_path(phy);
-    gchar* path;
-    gchar *strmode = NULL;
-    int vbus;
-
-    vbus = 0;
-
-    path = g_strconcat(phy_sysfs_path, "/vbus", NULL);
-    gboolean ok = g_file_get_contents(path, &strmode, NULL, NULL);
-    if (ok) {
-        if (strcmp(strmode, "on\n") == 0) {
-            vbus = 1;
-        } else if (strcmp(strmode, "off\n") == 0) {
-            vbus = 0;
-        }
-
-        free(strmode);
-    }
-    free(path);
-
-    return vbus;
-}
-
 static GUdevDevice* find_device(const gchar* subsystem_match, const gchar* driver_match, const gchar* name_match) {
     GList *l, *e;
     GUdevDevice *dev, *res = NULL;
@@ -248,7 +208,6 @@ static int find_devices(void) {
     gboolean ok = FALSE;
 
     for (i = 0; i < DRIVER_COUNT; i++) {
-        phy = NULL;
         otg = NULL;
         supply = NULL;
 
@@ -264,17 +223,6 @@ static int find_devices(void) {
                 continue;
             }
             fprintf(stderr, "Found supply\n");
-        }
-
-        if (d->phy_driver.present == TRUE) {
-            phy = find_device(d->phy_driver.subsystem,
-                              d->phy_driver.driver,
-                              d->phy_driver.name);
-            if (!phy) {
-                fprintf(stderr, "Cannot find phy for %s\n", d->name);
-                continue;
-            }
-            fprintf(stderr, "Found phy\n");
         }
 
         if (d->usb_driver.present == TRUE) {
@@ -294,7 +242,6 @@ static int find_devices(void) {
     }
 
     if (ok) {
-        cache.vbus = read_phy_vbus();
         cache.usb_mode = read_usb_mode();
         if (active_device->supply_driver.present)
             cache.supply_mode = read_supply_mode();
@@ -305,21 +252,16 @@ static int find_devices(void) {
 }
 
 static gboolean pc_connected() {
-    if (active_device->supply_driver.present)
-        return cache.supply_mode == USB_SUPPLY_CDP;
-    else
-        /* TODO: Also add USB_MODE_A_PERIPHERAL */
-        return cache.vbus && (cache.usb_mode == USB_MODE_B_PERIPHERAL);
+    return (cache.usb_mode == USB_MODE_B_PERIPHERAL) || (cache.usb_mode == USB_MODE_A_PERIPHERAL);
 }
 
 static gboolean update_info() {
     cache.supply_mode = read_supply_mode();
     cache.usb_mode = read_usb_mode();
-    cache.vbus = read_phy_vbus();
-    fprintf(stderr, "VBUS: %d, usb_mode: %d; supply_mode: %d\n", cache.vbus, cache.usb_mode, cache.supply_mode);
+    fprintf(stderr, "usb_mode: %d; supply_mode: %d\n", cache.usb_mode, cache.supply_mode);
 
     if ((user_callback)) {
-        user_callback(pc_connected(), user_data);
+        user_callback(cache.usb_mode, cache.supply_mode, user_data);
     }
 
     return G_SOURCE_REMOVE;
@@ -330,16 +272,12 @@ static void on_uevent(GUdevClient *client, const char *action, GUdevDevice *devi
     (void)action;
 
     const gchar* sysfs_path = g_udev_device_get_sysfs_path(device);
-    const gchar* phy_sysfs_path;
     const gchar* supply_sysfs_path;
-
-    phy_sysfs_path = g_udev_device_get_sysfs_path(phy);
 
     if (active_device->supply_driver.present)
         supply_sysfs_path = g_udev_device_get_sysfs_path(supply);
 
-    if ((active_device->supply_driver.present && (strcmp(supply_sysfs_path, sysfs_path) == 0)) ||
-       ((!active_device->supply_driver.present) && (strcmp(phy_sysfs_path, sysfs_path) == 0))) {
+    if (active_device->supply_driver.present && (strcmp(supply_sysfs_path, sysfs_path) == 0)) {
         /* Not all values update fast enough, and we're not in a hurry */
         g_timeout_add(1000, update_info, NULL);
     }
@@ -383,8 +321,9 @@ void uh_set_callback(UhCallback cb, gpointer data) {
     return;
 }
 
-void uh_query_state(gboolean* cable_connected) {
-    *cable_connected = pc_connected();
+void uh_query_state(gint* usb_mode, gint* supply_mode) {
+    *supply_mode = read_supply_mode();
+    *usb_mode = read_usb_mode();
 }
 
 /* TODO */
