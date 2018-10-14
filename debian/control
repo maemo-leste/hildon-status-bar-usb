@@ -6,6 +6,6 @@ Build-Depends: debhelper (>= 5), pkg-config, libhildondesktop1-dev, libgudev-1.0
 
 Package: hildon-status-bar-usb
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, hildon-status-bar-usb-l10n-mr0 | hildon-status-bar-usb-l10n-mr
+Depends: ${shlibs:Depends}, ${misc:Depends}, hildon-status-bar-usb-l10n-mr0 | hildon-status-bar-usb-l10n-mr, ke-revc
 Description: Status menu USB plugin
  Status menu plugin for indicating USB status of the device
