@@ -251,7 +251,7 @@ static int find_devices(void) {
     return 1;
 }
 
-static gboolean pc_connected() {
+gboolean uh_pc_connected() {
     return (cache.usb_mode == USB_MODE_B_PERIPHERAL) || (cache.usb_mode == USB_MODE_A_PERIPHERAL);
 }
 

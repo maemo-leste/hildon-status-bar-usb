@@ -150,12 +150,13 @@ static void usb_status_menu_item_class_init(UsbStatusMenuItemClass *klass)
 
 static gboolean osso_usb_mass_storage_is_used()
 {
-  return system("/usr/sbin/osso-usb-mass-storage-is-used.sh") > 0;
+  return system("/bin/ls /sys/kernel/config/usb_gadget/g1/functions/mass_storage.*") == 0;
 }
 
 static gboolean is_pcsuite_enabled()
 {
-  return system("/bin/ls /dev/ttyGS*") == 0;
+  /* FIXME */
+  return system("/bin/ls /sys/kernel/config/usb_gadget/g1/functions/ecm.usb0/") == 0;
 }
 
 static void stop_enable_usb_mode_timeout(UsbStatusMenuItem *plugin)
@@ -201,13 +202,12 @@ static void usb_status_menu_enable_mode(UsbStatusMenuItem *plugin,
                                         const char *mode,
                                         DBusPendingCallNotifyFunction cb)
 {
-  gboolean cable_connected;
+  gboolean cable_connected = uh_pc_connected();
 
   UsbStatusMenuItemPrivate *priv = plugin->priv;
 
   if (priv->tries_count <= 29) {
-    uh_query_state(&cable_connected);
-    if (cable_connected == 1) {
+    if (cable_connected) {
       DBusMessage *message;
       DBusConnection *connection;
       DBusPendingCall *pending = NULL;
@@ -262,11 +262,8 @@ static void usb_status_menu_enable_mode(UsbStatusMenuItem *plugin,
 
 static gboolean is_cable_detached(UsbStatusMenuItem *plugin)
 {
-  gboolean rv;
-  gboolean cable_connected;
+  gboolean rv = !uh_pc_connected();
 
-  uh_query_state(&cable_connected);
-  rv = !cable_connected;
   if (rv) {
     g_warning("usb-plugin::warning Cable detached before reply from ke-recv");
     stop_enable_usb_mode_timeout(plugin);
@@ -612,15 +609,19 @@ static void usb_status_menu_button_clicked_cb(GtkWidget *widget,
     usb_status_menu_create_dialog(plugin);
 }
 
-static void usb_status_menu_item_hal_cb(gboolean cable_connected_to_pc,
-                                        UsbStatusMenuItem *plugin)
+static void usb_status_menu_item_hal_cb(gint usb_mode, gint supply_mode,
+        UsbStatusMenuItem *plugin)
 {
+  /* We rely on udev-helper's cached values in uh_pc_connected(); */
+  (void)usb_mode;
+  (void)supply_mode;
+
   UsbStatusMenuItemPrivate *priv = plugin->priv;
 
   if (priv->expected_replies <= 0 ) {
     if (priv->ke_recv_alive) {
       /* TODO: Hardcoded mode (b_peripheral) is not cool */
-      if ( cable_connected_to_pc == 1) {
+      if (uh_pc_connected() ) {
         g_debug("usb-plugin::usb-event: peripheral");
         if (!priv->current_mode) {
           usb_status_menu_show_dialog(plugin, 1);
@@ -745,17 +746,31 @@ static void usb_status_menu_item_init(UsbStatusMenuItem *plugin)
   if (!s)
     s = g_strdup("<no data>");
 
-  uh_query_state(&cable_connected);
+  /*uh_query_state(&cable_connected);*/
+  cable_connected = uh_pc_connected();
 
   if (!cable_connected) {
     g_message("usb-plugin::init [saved_state='%s', usb_conn='%s']", s, "false");
-    usb_status_menu_item_hal_cb(FALSE, plugin);
+    usb_status_menu_item_hal_cb(0, 0, plugin); /* FIXME: 0, 0 is bad */
   } else {
     g_message("usb-plugin::init [saved_state='%s', usb_conn='%s']", s, "true");
 
+    if (i == 0) {
+        if (is_pcsuite_enabled()) {
+            i = 3;
+        } else if (osso_usb_mass_storage_is_used()) {
+            i = 2;
+        } else {
+            i = 1;
+        }
+        usb_status_menu_show_dialog(plugin, i);
+    }
+#if 0
     if(i == 0) {
-      usb_status_menu_item_hal_cb(TRUE, plugin);
-    } else if (i == 2) {
+      usb_status_menu_item_hal_cb(0, 0, plugin); /* FIXME: 0, 0 is bad */
+    }
+    else
+    if (i == 2) {
       if (osso_usb_mass_storage_is_used())
         usb_status_menu_show_dialog(plugin, 2);
       else
@@ -765,6 +780,7 @@ static void usb_status_menu_item_init(UsbStatusMenuItem *plugin)
     } else {
       usb_status_menu_show_dialog(plugin, 3);
     }
+#endif
   }
 
   g_free(s);

@@ -7,6 +7,7 @@ int uh_init();
 int uh_destroy();
 void uh_set_callback(UhCallback cb, gpointer data);
 void uh_query_state(gint*, gint*);
+gboolean uh_pc_connected();
 
 /* TODO: Implement this */
 char *uh_get_device_name();
