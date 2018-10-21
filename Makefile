@@ -14,6 +14,6 @@ clean:
 	$(RM) usb_plugin.so
 
 usb_plugin.so: usb-plugin.c udev-helper.c
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(shell pkg-config --cflags --libs gudev-1.0 libusbgx libhildondesktop-1) -W -Wall -O2 -shared $^ -o $@
+	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) $(shell pkg-config --cflags --libs gudev-1.0 libhildondesktop-1) -W -Wall -O2 -shared $^ -o $@
 
 .PHONY: all install clean
