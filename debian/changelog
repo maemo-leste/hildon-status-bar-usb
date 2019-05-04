@@ -1,3 +1,9 @@
+hildon-status-bar-usb (3.0.7) unstable; urgency=low
+
+  * Add Pinephone devkit 1.2 support
+
+ -- Merlijn B. W. Wajer <merlijn@wizzup.org>  Sat, 04 May 2019 05:29:29 +0200
+
 hildon-status-bar-usb (3.0.6) unstable; urgency=low
 
   * Add Motorola droid 4 support
