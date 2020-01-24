@@ -1,3 +1,9 @@
+hildon-status-bar-usb (3.0.8) unstable; urgency=low
+
+  * Actually add Pinephone devkit 1.2 support; missed tag previously
+
+ -- Merlijn B. W. Wajer <merlijn@wizzup.org>  Fri, 24 Jan 2020 13:50:48 +0100
+
 hildon-status-bar-usb (3.0.7) unstable; urgency=low
 
   * Add Pinephone devkit 1.2 support
