@@ -1,3 +1,9 @@
+hildon-status-bar-usb (3.1.0) unstable; urgency=low
+
+  * Port to dh10 and autotools
+
+ -- Merlijn B. W. Wajer <merlijn@wizzup.org>  Sat, 25 Jan 2020 14:39:17 +0100
+
 hildon-status-bar-usb (3.0.8) unstable; urgency=low
 
   * Actually add Pinephone devkit 1.2 support; missed tag previously
