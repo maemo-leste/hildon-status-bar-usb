@@ -13,3 +13,7 @@ usb_plugin_la_LDFLAGS = -Wl,--as-needed, -module -avoid-version
 
 hildonstatusmenudesktopentry_DATA = hildon-status-menu-usb.desktop
 EXTRA_DIST = $(hildonstatusmenudesktopentry_DATA)
+
+install-data-hook:
+	@(cd $(DESTDIR)$(hildondesktoplibdir) && $(RM) \
+		$(hildondesktoplib_LTLIBRARIES))
