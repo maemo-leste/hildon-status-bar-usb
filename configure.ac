@@ -3,6 +3,7 @@ AC_INIT([Status area USB applet],
         [merlijn@wizzup.org], [hildon-status-bar-usb])
 
 AM_INIT_AUTOMAKE
+LT_INIT([shared disable-static])
 AC_CONFIG_FILES([Makefile])
 
 AC_PROG_CC
