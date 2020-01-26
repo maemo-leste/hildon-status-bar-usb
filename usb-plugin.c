@@ -22,9 +22,6 @@
 #define USB_STATUS_MENU_ITEM_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), \
             USB_TYPE_STATUS_MENU_ITEM, UsbStatusMenuItemClass))
 
-#define USB_STATUS_MENU_ITEM_GET_PRIVATE(obj) (G_TYPE_INSTANCE_GET_PRIVATE ((obj), \
-            USB_TYPE_STATUS_MENU_ITEM, UsbStatusMenuItemPrivate))
-
 #if 1
 #undef g_debug
 #define g_debug g_warning
@@ -66,7 +63,7 @@ struct _UsbStatusMenuItemCbData {
   int mode;
 };
 
-HD_DEFINE_PLUGIN_MODULE (UsbStatusMenuItem, usb_status_menu_item, HD_TYPE_STATUS_MENU_ITEM);
+HD_DEFINE_PLUGIN_MODULE_EXTENDED (UsbStatusMenuItem, usb_status_menu_item, HD_TYPE_STATUS_MENU_ITEM, G_ADD_PRIVATE_DYNAMIC(UsbStatusMenuItem), , );
 
 static const char *usb_modes[] = {
   "NO_CONNECTION",
@@ -144,8 +141,6 @@ static void usb_status_menu_item_class_init(UsbStatusMenuItemClass *klass)
   GObjectClass *object_class = G_OBJECT_CLASS(klass);
 
   object_class->finalize = (GObjectFinalizeFunc)usb_status_menu_item_finalize;
-
-  g_type_class_add_private (klass, sizeof(UsbStatusMenuItemPrivate));
 }
 
 static gboolean osso_usb_mass_storage_is_used()
@@ -649,7 +644,7 @@ static void usb_status_menu_item_hal_cb(gint usb_mode, gint supply_mode,
 
 static void usb_status_menu_item_init(UsbStatusMenuItem *plugin)
 {
-  UsbStatusMenuItemPrivate *priv = USB_STATUS_MENU_ITEM_GET_PRIVATE(plugin);
+  UsbStatusMenuItemPrivate *priv = usb_status_menu_item_get_instance_private(plugin);
   GtkWidget *vbox1;
   GtkWidget *vbox2;
   GtkWidget *label;
